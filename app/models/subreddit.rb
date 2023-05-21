@@ -4,8 +4,8 @@ class Subreddit < ApplicationRecord
     belongs_to :user, class_name: "User", foreign_key: "user_id"
     
     # Creating validations
-    validates :title, presence :true
-    validates :body, presence :true
+    # validates :title, presence :true
+    # validates :body, presence :true
 
     # Defining methods
     def increment_replies

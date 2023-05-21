@@ -14,7 +14,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_05_16_091300) do
   create_table "comments", force: :cascade do |t|
     t.string "author", null: false
     t.text "comment", null: false
-    t.integer "replies", null: false
+    t.integer "replies", default: 0, null: false
     t.string "commentable_type", null: false
     t.integer "commentable_id", null: false
     t.integer "user_id", null: false

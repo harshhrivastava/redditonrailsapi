@@ -1,86 +1,94 @@
 class SessionsController < ApplicationController
   def create
-    if User.exists({email: params[:email]})
-      user = User.find({email: params[:email]})
-      if user.verify_password(params[:password])
-        # access_token = generate_token(user, "access")
-        # refresh_token = generate_token(user, "refresh")
-        # render json: ({
-        #   user: user,
-        #   access_token: access_token,
-        #   refresh_token: refresh_token
-        # })
-        render json: ({
-          success: true
-        })
+    if !params[:email].nil? && !params[:password].nil?
+      user = User.new({email: params[:email]})
+      user.clean_email
+      user = User.find_by({email: user.email})
+      if !user.nil?
+        if user.verify_password(params[:password])
+          access_token = generate_token(user, "access")
+          refresh_token = generate_token(user, "refresh")
+          cookies[:access_token] = {
+            value: access_token,
+            exp: 10.minutes.from_now,
+            httponly: true
+          }
+          cookies[:refresh_token] = {
+            value: refresh_token,
+            exp: 30.days.from_now,
+            httponly: true
+          }
+          render json: ({
+            user: user,
+            access_token: access_token,
+            refresh_token: refresh_token
+          })
+        else
+          render json: ({
+            errors: ["Wrong credentials entered."]
+          })
+        end
       else
         render json: ({
-          error: "Wrong credentials entered."
+          errors: ["User not found."]
         })
       end
     else
+      errors = []
+      if params[:email].nil?
+        errors.push("Email is required.")
+      end
+      if params[:password].nil?
+        errors.push("Password is required.")
+      end
       render json: ({
-        error: "User not found."
+        errors: errors
       })
     end
   end
 
   def refresh
-    if params[:refresh_token].present?
-      decoded_refresh_token = decode_token(params[:refresh_token])
+    if cookies[:refresh_token] || params[:refresh_token]
+      decoded_refresh_token = decode_token(cookies[:refresh_token])
       if !token_expired?(decoded_refresh_token)
-        user = User.find(decoded_refresh_token[:id])
+        user = User.find(decoded_refresh_token[0]["id"])
         access_token = generate_token(user, "access")
         refresh_token = generate_token(user, "refresh")
+        cookies[:access_token] = {
+          value: access_token,
+          exp: 10.minutes.from_now,
+          httponly: true
+        }
+        cookies[:refresh_token] = {
+          value: refresh_token,
+          exp: 30.days.from_now,
+          httponly: true
+        }
         render json: ({
           access_token: access_token,
           refresh_token: refresh_token
         })
       else
         render json: ({
-          error: "Refresh token has expired. Please generate a new one by logging in."
+          errors: ["Refresh token has expired. Please generate a new one by logging in."]
         })
       end
-    elsif params[:access_token].present?
+    elsif cookies[:access_token] || params[:access_token]
       render json: ({
-        error: "Refresh token not present but access token is present. Please generate a new refresh token by logging in."
+        errors: ["Refresh token not present but access token is present. Please generate a new refresh token by logging in."]
       })
     else
       render json: ({
-        error: "Both access token and refresh token are not present. Please generate a new one by logging in."
+        errors: ["Both access token and refresh token are not present. Please generate a new one by logging in."]
       })
     end
   end
 
-  private
-
-  def generate_token(user, type)
-    payload = {id: user[:id]}
-    if type == "access"
-      exp = 10.minutes.from_now.to_i
-    elsif type == "refresh"
-      exp = 30.days.from_now.to_i
-    end
-    JWT.encode(payload, Rails.application.secrets.secret_key_base, "HS256", {exp: exp})
-  end
-
-  def decode_token(token)
-    begin
-      JWT.decode(token, Rails.application.secrets.secret_key_base, true, {algorithm: "HS256"}).first
-    rescue JWT::DecodeError
-      render json: ({
-        error: "Error occured while decoding the token."
-      })
-      return
-    rescue JWT::ExpiredSignature
-      render json: ({
-        error: "Signature has expired."
-      })
-      return
-    end
-  end
-
-  def token_expired?(token)
-    Time.at(token[:exp]) < Time.now
+  def destroy
+    cookies.delete(:access_token)
+    cookies.delete(:refresh_token)
+    render json: ({
+      messages: ["Logged out successfully."]
+    })
   end
 end
