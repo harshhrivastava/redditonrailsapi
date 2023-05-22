@@ -39,6 +39,9 @@ gem "bcrypt", "~> 3.1.7"
 # Use jwt to encrypt or decrypt JWT tokens required for authentication
 gem "jwt"
 
+# Use letter opener if you don't want to send email but want to preview them
+gem "letter_opener", group: :development
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ mingw mswin x64_mingw jruby ]
 

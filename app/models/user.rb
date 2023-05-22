@@ -12,6 +12,8 @@ class User < ApplicationRecord
     before_save :clean_email
     before_save :encrypt_password
     before_update :update_author_name_in_subreddits
+    before_create :generate_confirmation_token
+    after_create :send_confirmation_email
 
     # Defining methods
     def clean_email
@@ -19,6 +21,14 @@ class User < ApplicationRecord
             self.email = email.split("+").first + "@" + email.split("@").last
             self.email.downcase
         end
+    end
+
+    def generate_confirmation_token
+        self.email_confirmation_token = SecureRandom.urlsafe_base64
+    end
+
+    def send_confirmation_email
+        UserMailer.confirmation_mail(self).deliver_now
     end
 
     def encrypt_password

@@ -69,6 +69,11 @@ class ApplicationController < ActionController::Base
           decoded_access_token = decode_token(cookies[:access_token])
           if !token_expired?(decoded_access_token)
               @user = User.find(decoded_access_token[0]["id"])
+              if !@user.email_confirmation_status == true
+                render json: ({
+                  errors: ["You need to confirm your email in order to access the services."]
+                })
+              end
           else
               render json: ({
                   errors: ["Access token has expired. Please generate a new one by refreshing."]

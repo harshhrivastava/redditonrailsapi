@@ -1,0 +1,4 @@
+<h1>Confirm Your Email Address</h1>
+<p>Hello <%= @user.username %>,</p>
+<p>Please click the following link to confirm your email address:</p>
+<p><%= link_to 'Confirm Email', confirm_email_url(token: @user.email_confirmation_token) %></p>

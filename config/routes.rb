@@ -7,6 +7,7 @@ Rails.application.routes.draw do
 
   # User Routes
   get "/user/", to: "users#show"
+  get '/emailconfirmation/:token', to: 'users#emailconfirmation', as: 'confirm_email'
   post "/register/", to: "users#create"
   delete "/delete/", to: "users#destroy"
   patch "/edit/", to: "users#update"
@@ -23,6 +24,6 @@ Rails.application.routes.draw do
   get "/comment/", to: "comments#show"
   post "/comments/new/", to: "comments#create"
   patch "/comments/edit/", to: "comments#update"
-  delete "/comments/delete/", to: "comments#destroy"
-  
+  delete "/comments/delete/", to: "comments#destroy" 
+
 end

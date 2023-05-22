@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-    before_action :validate, except: [:create]
+    before_action :validate, except: [:create, :emailconfirmation]
 
     def show
         render json: ({
@@ -49,19 +49,19 @@ class UsersController < ApplicationController
             })
         end
     end
-
+    
     # def update
     #     if @user.update(get_user_update_params)
     #         render json: ({
-    #             user: @user
-    #         })                
+    #                 user: @user
+    #             })                
     #     else
     #         render json: ({
     #             errors: ["Some error occured while updating your profile."]
     #         })
     #     end
     # end
-
+        
     def destroy
         if @user.destroy
             cookies.delete(:access_token)
@@ -76,12 +76,27 @@ class UsersController < ApplicationController
         end
     end
 
+    def emailconfirmation
+        user = User.find_by({email_confirmation_token: params[:token]})
+        if user
+            user.email_confirmation_status = true
+            render json: ({
+                user: user,
+                messages: ["Your email has been confirmed."]
+            })
+        else
+            render json: ({
+                errors: ["Invalid/expired confirmation link"]
+            })
+        end
+    end
+    
     private
-
+    
     def get_user_params
         params.permit(:username, :email, :password)
     end
-
+    
     # def get_user_update_params
     #     params.permit(:username, :password)
     # end
